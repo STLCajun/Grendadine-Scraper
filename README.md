@@ -49,7 +49,7 @@ node scrape.js
 This will:
 1. Load configuration from the .env file
 2. Wipe existing data from the database
-3. Scrape calendar events from the Archon47 website
+3. Scrape calendar events from the Grenadine Event website
 4. Process events based on the EVENTS_TO_PROCESS setting
 5. Scrape detailed information for each event and its speakers
 6. Insert the collected data into MongoDB
@@ -59,27 +59,11 @@ This will:
 Configuration is managed through the `.env` file. Here are the available options:
 
 - `MONGODB_URI`: MongoDB connection string
-- `BASE_URL`: Base URL of the Archon47 website
+- `BASE_URL`: Base URL of the Grenadine Event website
 - `EVENTS_TO_PROCESS`: Number of events to process
 - `HEADLESS`: Whether to run Puppeteer in headless mode (true/false)
 - `DELAY_BETWEEN_SPEAKERS`: Delay in milliseconds between processing speakers
 - `DELAY_BETWEEN_EVENTS`: Delay in milliseconds between processing events
-
-## Data Models
-
-(Data models section remains the same)
-
-## Functions
-
-(Functions section remains the same)
-
-## Error Handling
-
-(Error handling section remains the same)
-
-## Limitations
-
-(Limitations section remains the same)
 
 ## Contributing
 

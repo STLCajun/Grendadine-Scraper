@@ -1,9 +1,17 @@
+require('dotenv').config();
 const puppeteer = require('puppeteer');
 const mongoose = require('mongoose');
 const moment = require('moment');
 
+// Use environment variables
+const MONGODB_URI = process.env.MONGODB_URI;
+const BASE_URL = process.env.BASE_URL;
+const EVENTS_TO_PROCESS = parseInt(process.env.EVENTS_TO_PROCESS, 10);
+const HEADLESS = process.env.HEADLESS === 'true';
+const DELAY_BETWEEN_SPEAKERS = parseInt(process.env.DELAY_BETWEEN_SPEAKERS, 10);
+const DELAY_BETWEEN_EVENTS = parseInt(process.env.DELAY_BETWEEN_EVENTS, 10);
+
 let uniqueSpeakers = [];
-const url = 'mongodb://localhost:27017/Archon47';
 
 // Define Mongoose schemas
 const speakerSchema = new mongoose.Schema({
@@ -41,7 +49,7 @@ const Event = mongoose.model('Event', eventSchema);
 // Updated function to insert data using Mongoose
 async function insertWithMongoose(data) {
     try {
-        await mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
+        await mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
         // Insert events first
         const insertedEvents = await Event.insertMany(data.events);
@@ -68,7 +76,7 @@ async function insertWithMongoose(data) {
 // Function to wipe out existing data
 async function wipeDatabase() {
     try {
-        await mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
+        await mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
         await Speaker.deleteMany({});
         await Event.deleteMany({});
@@ -183,10 +191,10 @@ async function addUniqueSpeaker(speaker) {
                 console.log(`Processing ${details.speakers.length} speakers for event ${events[i].sessionId}`);
                 for (const speaker of details.speakers) {
                     await addUniqueSpeaker({...speaker, sessionId: events[i].sessionId});
-                    await delay(2000); // Add a 2-second delay between speaker requests
+                    await delay(DELAY_BETWEEN_SPEAKERS); // Add a 2-second delay between speaker requests
                 }
             }
-            await delay(5000)
+            await delay(DELAY_BETWEEN_EVENTS);
         } catch (error) {
             console.error(`Failed to process session details: ${events[i].sessionId}`);
             console.error(error);
@@ -204,11 +212,11 @@ async function addUniqueSpeaker(speaker) {
 })();
 
 async function scrapeSessionDetails(sessionId) {
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({headless: HEADLESS});
     const page = await browser.newPage();
 
     try {
-        await page.goto(`https://sites.grenadine.co/sites/archon/en/archon-47/schedule/${sessionId}/`, {waitUntil: 'networkidle2'});
+        await page.goto(`${BASE_URL}/schedule/${sessionId}/`, {waitUntil: 'networkidle2'});
 
         // Wait for the speakers section to load
         await page.waitForSelector('.d-flex.flex-wrap.justify-content-center.my-5', {timeout: 5000});
@@ -276,7 +284,7 @@ async function scrapeSpeakerDetails(speakerUrl) {
         return null;
     }
 
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({headless: HEADLESS});
     const page = await browser.newPage();
 
     try {
@@ -326,11 +334,11 @@ async function scrapeSpeakerDetails(speakerUrl) {
 }
 
 async function scrapeCalendarEvents() {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({ headless: HEADLESS });
     const page = await browser.newPage();
 
     try {
-        await page.goto('https://sites.grenadine.co/sites/archon/en/archon-47/schedule?date=all', { waitUntil: 'networkidle2' });
+        await page.goto(`${BASE_URL}/schedule?date=all`, { waitUntil: 'networkidle2' });
 
         const eventDetails = await page.evaluate(() => {
             const eventElements = document.querySelectorAll('[data-session-id]');
